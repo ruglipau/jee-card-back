@@ -29,6 +29,12 @@ public class StandardGameService implements GameService {
     }
 
     @Override
+    public Game getGame(String name) {
+        Game game = gameRepository.findByName(name);
+        return game;
+    }
+
+    @Override
     public void setAvailable(Long gameId, boolean available) {
         Optional<Game> game = gameRepository.findById(gameId);
         if(game.isPresent()) game.get().setAvailable(available);

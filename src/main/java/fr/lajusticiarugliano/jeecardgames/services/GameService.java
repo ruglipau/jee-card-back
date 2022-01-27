@@ -8,6 +8,7 @@ public interface GameService {
 
     Game addGame(Game game);
     Game getGame(Long id);
+    Game getGame(String name);
     void setAvailable(Long gameId, boolean available);
 
     List<Game> getGames();

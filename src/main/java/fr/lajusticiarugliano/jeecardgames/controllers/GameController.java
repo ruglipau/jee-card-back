@@ -23,8 +23,8 @@ public class GameController {
     }
 
     @GetMapping("/availability")
-    public ResponseEntity<Boolean> checkAvailable(@RequestParam Long gameId) {
-        return ResponseEntity.ok().body(gameService.getGame(gameId).isAvailable());
+    public ResponseEntity<Boolean> checkAvailable(@RequestParam String name) {
+        return ResponseEntity.ok().body(gameService.getGame(name).isAvailable());
     }
 
     @PostMapping("availability")
