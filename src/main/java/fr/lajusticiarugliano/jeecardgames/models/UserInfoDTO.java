@@ -1,12 +1,12 @@
 package fr.lajusticiarugliano.jeecardgames.models;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import javax.persistence.*;
-
 @Data
-public class NewUserDTO {
+@AllArgsConstructor
+public class UserInfoDTO {
     private String username;
     private String mail;
-    private String password;
+    private String role;
 }

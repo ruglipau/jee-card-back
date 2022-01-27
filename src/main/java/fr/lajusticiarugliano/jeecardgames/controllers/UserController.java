@@ -9,6 +9,7 @@ import fr.lajusticiarugliano.jeecardgames.entities.AppUser;
 import fr.lajusticiarugliano.jeecardgames.entities.GameSummary;
 import fr.lajusticiarugliano.jeecardgames.models.NewGameSummaryDTO;
 import fr.lajusticiarugliano.jeecardgames.models.NewUserDTO;
+import fr.lajusticiarugliano.jeecardgames.models.UserInfoDTO;
 import fr.lajusticiarugliano.jeecardgames.security.SecurityUtil;
 import fr.lajusticiarugliano.jeecardgames.services.UserService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,8 @@ import java.util.*;
 public class UserController {
     private final UserService userService;
 
+    private final String MAIL_REGEX = "^((?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\]))$";
+
     @GetMapping("")
     public ResponseEntity<List<AppUser>> getUsers() {
         return ResponseEntity.ok().body(userService.getUsers());
@@ -38,6 +41,10 @@ public class UserController {
 
     @PostMapping("/save")
     public ResponseEntity<AppUser> saveUser(@RequestBody NewUserDTO user) {
+
+        if(!user.getMail().matches(MAIL_REGEX)) {
+            return ResponseEntity.badRequest().body(null);
+        }
 
         AppUser appUser = new AppUser(null, user.getUsername(), user.getMail(), user.getPassword(), "ROLE_USER", new ArrayList<>());
 
@@ -79,6 +86,24 @@ public class UserController {
         AppUser user = userService.getUser(mail);
 
         return "Ce message est accessible uniquement aux utilisateurs authentifiés. Vous êtes connecté en tant que " + user.getUsername() + ".";
+    }
+
+    @GetMapping("/info")
+    public ResponseEntity<UserInfoDTO> getUserInfo(HttpServletRequest request) {
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        String accessToken = authorizationHeader.substring(7);
+
+        Algorithm algorithm = SecurityUtil.ALGORITHM;
+        JWTVerifier verifier = JWT.require(algorithm).build();
+        DecodedJWT decodedJWT = verifier.verify(accessToken);
+
+        String mail = decodedJWT.getSubject();
+
+        AppUser user = userService.getUser(mail);
+
+        UserInfoDTO userInfos = new UserInfoDTO(user.getUsername(), user.getMail(), user.getRole());
+
+        return ResponseEntity.ok().body(userInfos);
     }
 
     @GetMapping("hello")
