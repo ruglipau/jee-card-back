@@ -13,7 +13,7 @@ public class SecurityUtil {
             "/api/authenticate",
             "/api/users/save",
             "/api/users/refreshtoken",
-            "api/users/hello"
+            "/api/users/hello"
     };
 
     public static final boolean pathIsUnrestricted(String path) {
