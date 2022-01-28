@@ -47,6 +47,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.authorizeRequests().antMatchers(SecurityUtil.UNRESTRICTED_PATHS).permitAll();
         http.authorizeRequests().antMatchers(HttpMethod.GET, "/api/users", "/api/users/admins-message").hasAuthority("ROLE_ADMIN");
         http.authorizeRequests().antMatchers(HttpMethod.POST,"/api/games/availability").hasAuthority("ROLE_ADMIN");
+        http.authorizeRequests().antMatchers(HttpMethod.DELETE,"/api/users").hasAuthority("ROLE_ADMIN");
         http.authorizeRequests().antMatchers(HttpMethod.GET, "/api/users/users-message").hasAuthority("ROLE_USER");
         http.authorizeRequests().anyRequest().authenticated();
         http.addFilterBefore(new JWTAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);

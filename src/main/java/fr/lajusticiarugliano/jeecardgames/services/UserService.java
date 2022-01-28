@@ -14,6 +14,8 @@ public interface UserService {
     AppUser getUser(Long id);
     AppUser getUser(String mail);
 
+    void deleteUser(AppUser user);
+
     //Ajouter de la pagination ?
     List<AppUser> getUsers();
 }

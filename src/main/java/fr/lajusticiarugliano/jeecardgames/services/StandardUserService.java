@@ -82,6 +82,11 @@ public class StandardUserService implements UserService, UserDetailsService {
     }
 
     @Override
+    public void deleteUser(AppUser user) {
+        userRepository.delete(user);
+    }
+
+    @Override
     public List<AppUser> getUsers() {
         return userRepository.findAll();
     }
