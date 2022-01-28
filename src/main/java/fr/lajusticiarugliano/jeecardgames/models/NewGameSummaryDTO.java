@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 public class NewGameSummaryDTO {
 
-    private Long userId;
-    private GameSummary gameSummary;
+    private String game;
+    private boolean victory;
 }
