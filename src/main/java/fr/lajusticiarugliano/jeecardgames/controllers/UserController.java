@@ -32,11 +32,18 @@ import java.util.*;
 public class UserController {
     private final UserService userService;
 
-    //private final String MAIL_REGEX = "^((?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\]))$";
+    //private final String MAIL_REGEX = "^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$";
 
     @GetMapping("")
-    public ResponseEntity<List<AppUser>> getUsers() {
-        return ResponseEntity.ok().body(userService.getUsers());
+    public ResponseEntity<List<UserInfoDTO>> getUsers() {
+
+        List<AppUser> userList = userService.getUsers();
+        List<UserInfoDTO> userInfoList = new ArrayList<>();
+
+        for (AppUser user : userList) {
+            userInfoList.add(new UserInfoDTO(user.getUsername(), user.getMail(), user.getRole()));
+        }
+        return ResponseEntity.ok().body(userInfoList);
     }
 
     @PostMapping("/save")
@@ -54,18 +61,55 @@ public class UserController {
             URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/users/save").toUriString());
             return ResponseEntity.created(uri).body(savedUser);
         } catch(Exception e) {
-            System.out.println("C'est bien fait");
             return ResponseEntity.badRequest().body(null);
         }
     }
 
+    @DeleteMapping("")
+    public ResponseEntity deleteUser(@RequestParam String mail) {
+        AppUser user = userService.getUser(mail);
+        userService.deleteUser(user);
+        return ResponseEntity.noContent().build();
+
+    }
+
     @PostMapping("/newgame")
-    public ResponseEntity addGameSummaryToUser(@RequestBody NewGameSummaryDTO dto) {
-        GameSummary gs = dto.getGameSummary();
+    public ResponseEntity addGameSummaryToUser(HttpServletRequest request, HttpServletResponse response, @RequestBody NewGameSummaryDTO dto) {
+        GameSummary gs = new GameSummary(null, dto.getGame(), dto.isVictory());
+
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        String accessToken = authorizationHeader.substring(7);
+
+        Algorithm algorithm = SecurityUtil.ALGORITHM;
+        JWTVerifier verifier = JWT.require(algorithm).build();
+        DecodedJWT decodedJWT = verifier.verify(accessToken);
+
+        String mail = decodedJWT.getSubject();
+
+        AppUser user = userService.getUser(mail);
 
         userService.saveGameSummary(gs);
-        userService.addGameSummaryToUser(dto.getUserId(), gs.getId());
+        userService.addGameSummaryToUser(user.getId(), gs.getId());
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<GameSummary>> getGameHistory(HttpServletRequest request, HttpServletResponse response) {
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        String accessToken = authorizationHeader.substring(7);
+
+        Algorithm algorithm = SecurityUtil.ALGORITHM;
+        JWTVerifier verifier = JWT.require(algorithm).build();
+        DecodedJWT decodedJWT = verifier.verify(accessToken);
+
+        String mail = decodedJWT.getSubject();
+
+        AppUser user = userService.getUser(mail);
+
+        List<GameSummary> gameHistory = new ArrayList<>(user.getGameSummaries());
+        Collections.reverse(gameHistory);
+
+        return ResponseEntity.ok().body(gameHistory);
     }
 
     @GetMapping("/admins-message")
