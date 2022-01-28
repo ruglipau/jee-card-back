@@ -33,7 +33,7 @@ public class JeeCardGamesApplication {
 		return args -> {
 			service.saveUser(new AppUser(null, "evan", "evan@mail.com", "evan_pass", "ROLE_ADMIN", new ArrayList<>()));
 			service.saveUser(new AppUser(null, "pauline", "pauline@mail.com", "pauline_pass", "ROLE_ADMIN", new ArrayList<>()));
-			service.saveUser(new AppUser(null, "noob", "noob@mail.com", "noob_pass", "ROLE_USER", new ArrayList<>()));
+			service.saveUser(new AppUser(null, "davide", "davide@mail.com", "davide_pass", "ROLE_USER", new ArrayList<>()));
 		};
 	}
 
