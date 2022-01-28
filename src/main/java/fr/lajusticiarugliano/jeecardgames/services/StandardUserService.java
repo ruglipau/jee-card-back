@@ -58,9 +58,8 @@ public class StandardUserService implements UserService, UserDetailsService {
 
     @Override
     public AppUser saveUser(NewUserDTO user) throws APIServiceException {
-        if(!user.getPassword().matches(PASSWORD_REGEX)) {
-            throw new APIServiceException("Bad Password");
-        }
+        if(!user.getPassword().matches(PASSWORD_REGEX)) throw new APIServiceException("Bad Password");
+        if(user.getUsername().length() < 4) throw new APIServiceException("Username too short");
 
         AppUser appUser = new AppUser(null, user.getUsername(), user.getMail(), user.getPassword(), "ROLE_USER", new ArrayList<>());
 
@@ -78,6 +77,13 @@ public class StandardUserService implements UserService, UserDetailsService {
     public void setUserRole(Long userId, String roleName) {
         Optional<AppUser> user = userRepository.findById(userId);
         if(user.isPresent()) user.get().setRole(roleName);
+    }
+
+    @Override
+    public void setUserName(String mail, String username) throws APIServiceException {
+        if(username.length() < 4) throw new APIServiceException("Username too short");
+        AppUser user = userRepository.findByMail(mail);
+        user.setUsername(username);
     }
 
     @Override

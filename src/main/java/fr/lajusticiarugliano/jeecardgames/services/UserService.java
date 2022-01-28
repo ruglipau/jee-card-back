@@ -14,6 +14,7 @@ public interface UserService {
     AppUser saveUser(NewUserDTO user) throws APIServiceException;
     GameSummary saveGameSummary(NewGameSummaryDTO gs);
     void setUserRole(Long userId, String roleName);
+    void setUserName(String mail, String username) throws APIServiceException;
     void addGameSummaryToUser(Long userId, Long summaryId);
     AppUser getUser(Long id);
     AppUser getUser(String mail);

@@ -45,10 +45,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable();
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.authorizeRequests().antMatchers(SecurityUtil.UNRESTRICTED_PATHS).permitAll();
-        http.authorizeRequests().antMatchers(HttpMethod.GET, "/api/users", "/api/users/admins-message").hasAuthority("ROLE_ADMIN");
+        http.authorizeRequests().antMatchers(HttpMethod.GET, "/api/users").hasAuthority("ROLE_ADMIN");
         http.authorizeRequests().antMatchers(HttpMethod.POST,"/api/games/availability").hasAuthority("ROLE_ADMIN");
         http.authorizeRequests().antMatchers(HttpMethod.DELETE,"/api/users").hasAuthority("ROLE_ADMIN");
-        http.authorizeRequests().antMatchers(HttpMethod.GET, "/api/users/users-message").hasAuthority("ROLE_USER");
+        http.authorizeRequests().antMatchers(HttpMethod.PUT,"/api/users/username").authenticated();
         http.authorizeRequests().anyRequest().authenticated();
         http.addFilterBefore(new JWTAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(new CorsFilter(corsConfigurationSource("http://localhost:3000")), AbstractPreAuthenticatedProcessingFilter.class);

@@ -9,6 +9,7 @@ import fr.lajusticiarugliano.jeecardgames.entities.AppUser;
 import fr.lajusticiarugliano.jeecardgames.entities.GameSummary;
 import fr.lajusticiarugliano.jeecardgames.models.NewGameSummaryDTO;
 import fr.lajusticiarugliano.jeecardgames.models.NewUserDTO;
+import fr.lajusticiarugliano.jeecardgames.models.NewUsernameDTO;
 import fr.lajusticiarugliano.jeecardgames.models.UserInfoDTO;
 import fr.lajusticiarugliano.jeecardgames.security.SecurityUtil;
 import fr.lajusticiarugliano.jeecardgames.services.UserService;
@@ -66,6 +67,19 @@ public class UserController {
 
         GameSummary gs = userService.saveGameSummary(dto);
         userService.addGameSummaryToUser(user.getId(), gs.getId());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/username")
+    public ResponseEntity changeUsername(HttpServletRequest request, HttpServletResponse response, @RequestBody NewUsernameDTO dto) {
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        String mail = ControllerUtil.getMailFromAuthorizationHeader(authorizationHeader);
+
+        try {
+            userService.setUserName(mail, dto.getUsername());
+        } catch(Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
         return ResponseEntity.ok().build();
     }
 
