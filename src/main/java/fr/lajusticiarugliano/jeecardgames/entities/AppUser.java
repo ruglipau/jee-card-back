@@ -3,8 +3,11 @@ package fr.lajusticiarugliano.jeecardgames.entities;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.Pattern;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -12,6 +15,7 @@ import java.util.Collection;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Validated
 public class AppUser {
 
     @Id
@@ -22,6 +26,7 @@ public class AppUser {
     private String username;
 
     @Column(nullable = false, length = 255, unique = true)
+    @Email
     private String mail;
 
     @Column(nullable = false, length = 255)

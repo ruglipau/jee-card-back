@@ -2,9 +2,13 @@ package fr.lajusticiarugliano.jeecardgames.services;
 
 import fr.lajusticiarugliano.jeecardgames.entities.AppUser;
 import fr.lajusticiarugliano.jeecardgames.entities.GameSummary;
+import fr.lajusticiarugliano.jeecardgames.models.NewGameSummaryDTO;
+import fr.lajusticiarugliano.jeecardgames.models.NewUserDTO;
+import fr.lajusticiarugliano.jeecardgames.models.UserInfoDTO;
 import fr.lajusticiarugliano.jeecardgames.repositories.GameSummaryRepository;
 import fr.lajusticiarugliano.jeecardgames.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,6 +27,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Transactional
 public class StandardUserService implements UserService, UserDetailsService {
+
+    private final String PASSWORD_REGEX = "(?=.*[a-z])(?=.*[0-9])(?=.*[A-Z]).{8,50}";
 
     private final UserRepository userRepository;
     private final GameSummaryRepository gameSummaryRepository;
@@ -45,13 +51,26 @@ public class StandardUserService implements UserService, UserDetailsService {
     }
 
     @Override
-    public AppUser saveUser(AppUser user) {
+    public AppUser insertUser(AppUser user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
     @Override
-    public GameSummary saveGameSummary(GameSummary gs) {
+    public AppUser saveUser(NewUserDTO user) throws APIServiceException {
+        if(!user.getPassword().matches(PASSWORD_REGEX)) {
+            throw new APIServiceException("Bad Password");
+        }
+
+        AppUser appUser = new AppUser(null, user.getUsername(), user.getMail(), user.getPassword(), "ROLE_USER", new ArrayList<>());
+
+        appUser.setPassword(passwordEncoder.encode(user.getPassword()));
+        return userRepository.save(appUser);
+    }
+
+    @Override
+    public GameSummary saveGameSummary(NewGameSummaryDTO dto) {
+        GameSummary gs = new GameSummary(null, dto.getGame(), dto.isVictory());
         return gameSummaryRepository.save(gs);
     }
 
@@ -87,7 +106,14 @@ public class StandardUserService implements UserService, UserDetailsService {
     }
 
     @Override
-    public List<AppUser> getUsers() {
-        return userRepository.findAll();
+    public List<UserInfoDTO> getUsers() {
+
+        List<AppUser> userList = userRepository.findAll();
+        List<UserInfoDTO> userInfoList = new ArrayList<>();
+
+        for (AppUser user : userList) {
+            userInfoList.add(new UserInfoDTO(user.getUsername(), user.getMail(), user.getRole()));
+        }
+        return userInfoList;
     }
 }

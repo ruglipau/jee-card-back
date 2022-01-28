@@ -31,9 +31,9 @@ public class JeeCardGamesApplication {
 	@Bean
 	CommandLineRunner runUserService(UserService service) {
 		return args -> {
-			service.saveUser(new AppUser(null, "evan", "evan@mail.com", "evan_pass", "ROLE_ADMIN", new ArrayList<>()));
-			service.saveUser(new AppUser(null, "pauline", "pauline@mail.com", "pauline_pass", "ROLE_ADMIN", new ArrayList<>()));
-			service.saveUser(new AppUser(null, "davide", "davide@mail.com", "davide_pass", "ROLE_USER", new ArrayList<>()));
+			service.insertUser(new AppUser(null, "evan", "evan@mail.com", "evan_pass", "ROLE_ADMIN", new ArrayList<>()));
+			service.insertUser(new AppUser(null, "pauline", "pauline@mail.com", "pauline_pass", "ROLE_ADMIN", new ArrayList<>()));
+			service.insertUser(new AppUser(null, "davide", "davide@mail.com", "davide_pass", "ROLE_USER", new ArrayList<>()));
 		};
 	}
 

@@ -1,4 +1,4 @@
-package fr.lajusticiarugliano.jeecardgames.controllers;
+ package fr.lajusticiarugliano.jeecardgames.controllers;
 
 import fr.lajusticiarugliano.jeecardgames.entities.AppUser;
 import fr.lajusticiarugliano.jeecardgames.entities.Game;

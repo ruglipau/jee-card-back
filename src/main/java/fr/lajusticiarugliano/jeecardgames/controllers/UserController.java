@@ -32,31 +32,16 @@ import java.util.*;
 public class UserController {
     private final UserService userService;
 
-    //private final String MAIL_REGEX = "^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$";
-
     @GetMapping("")
     public ResponseEntity<List<UserInfoDTO>> getUsers() {
-
-        List<AppUser> userList = userService.getUsers();
-        List<UserInfoDTO> userInfoList = new ArrayList<>();
-
-        for (AppUser user : userList) {
-            userInfoList.add(new UserInfoDTO(user.getUsername(), user.getMail(), user.getRole()));
-        }
+        List<UserInfoDTO> userInfoList = userService.getUsers();
         return ResponseEntity.ok().body(userInfoList);
     }
 
     @PostMapping("/save")
     public ResponseEntity<AppUser> saveUser(@RequestBody NewUserDTO user) {
-
-        /*if(!user.getMail().matches(MAIL_REGEX)) {
-            return ResponseEntity.badRequest().body(null);
-        }*/
-
-        AppUser appUser = new AppUser(null, user.getUsername(), user.getMail(), user.getPassword(), "ROLE_USER", new ArrayList<>());
-
         try {
-            AppUser savedUser = userService.saveUser(appUser);
+            AppUser savedUser = userService.saveUser(user);
 
             URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/users/save").toUriString());
             return ResponseEntity.created(uri).body(savedUser);
@@ -75,20 +60,11 @@ public class UserController {
 
     @PostMapping("/newgame")
     public ResponseEntity addGameSummaryToUser(HttpServletRequest request, HttpServletResponse response, @RequestBody NewGameSummaryDTO dto) {
-        GameSummary gs = new GameSummary(null, dto.getGame(), dto.isVictory());
 
         String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        String accessToken = authorizationHeader.substring(7);
+        AppUser user = userService.getUser(ControllerUtil.getMailFromAuthorizationHeader(authorizationHeader));
 
-        Algorithm algorithm = SecurityUtil.ALGORITHM;
-        JWTVerifier verifier = JWT.require(algorithm).build();
-        DecodedJWT decodedJWT = verifier.verify(accessToken);
-
-        String mail = decodedJWT.getSubject();
-
-        AppUser user = userService.getUser(mail);
-
-        userService.saveGameSummary(gs);
+        GameSummary gs = userService.saveGameSummary(dto);
         userService.addGameSummaryToUser(user.getId(), gs.getId());
         return ResponseEntity.ok().build();
     }
@@ -96,15 +72,7 @@ public class UserController {
     @GetMapping("/history")
     public ResponseEntity<List<GameSummary>> getGameHistory(HttpServletRequest request, HttpServletResponse response) {
         String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        String accessToken = authorizationHeader.substring(7);
-
-        Algorithm algorithm = SecurityUtil.ALGORITHM;
-        JWTVerifier verifier = JWT.require(algorithm).build();
-        DecodedJWT decodedJWT = verifier.verify(accessToken);
-
-        String mail = decodedJWT.getSubject();
-
-        AppUser user = userService.getUser(mail);
+        AppUser user = userService.getUser(ControllerUtil.getMailFromAuthorizationHeader(authorizationHeader));
 
         List<GameSummary> gameHistory = new ArrayList<>(user.getGameSummaries());
         Collections.reverse(gameHistory);
@@ -112,54 +80,14 @@ public class UserController {
         return ResponseEntity.ok().body(gameHistory);
     }
 
-    @GetMapping("/admins-message")
-    public String excluAdmin() {
-        return "Ce message est accessible uniquement aux admins";
-    }
-
-    @GetMapping("/users-message")
-    public String excluUser() {
-        return "Ce message est accessible uniquement aux users";
-    }
-
-    @GetMapping("auth-message")
-    public String excluAuth(HttpServletRequest request, HttpServletResponse response) {
-
-        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        String accessToken = authorizationHeader.substring(7);
-
-        Algorithm algorithm = SecurityUtil.ALGORITHM;
-        JWTVerifier verifier = JWT.require(algorithm).build();
-        DecodedJWT decodedJWT = verifier.verify(accessToken);
-
-        String mail = decodedJWT.getSubject();
-
-        AppUser user = userService.getUser(mail);
-
-        return "Ce message est accessible uniquement aux utilisateurs authentifiés. Vous êtes connecté en tant que " + user.getUsername() + ".";
-    }
-
     @GetMapping("/info")
     public ResponseEntity<UserInfoDTO> getUserInfo(HttpServletRequest request) {
         String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        String accessToken = authorizationHeader.substring(7);
-
-        Algorithm algorithm = SecurityUtil.ALGORITHM;
-        JWTVerifier verifier = JWT.require(algorithm).build();
-        DecodedJWT decodedJWT = verifier.verify(accessToken);
-
-        String mail = decodedJWT.getSubject();
-
-        AppUser user = userService.getUser(mail);
+        AppUser user = userService.getUser(ControllerUtil.getMailFromAuthorizationHeader(authorizationHeader));
 
         UserInfoDTO userInfos = new UserInfoDTO(user.getUsername(), user.getMail(), user.getRole());
 
         return ResponseEntity.ok().body(userInfos);
-    }
-
-    @GetMapping("hello")
-    public String hello() {
-        return "Ce message est accessible à tout le monde";
     }
 
     @GetMapping("/refreshtoken")
@@ -168,17 +96,12 @@ public class UserController {
 
         if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             try {
-                String refreshToken = authorizationHeader.substring(7);
-
-                Algorithm algorithm = SecurityUtil.ALGORITHM;
-                JWTVerifier verifier = JWT.require(algorithm).build();
-                DecodedJWT decodedJWT = verifier.verify(refreshToken);
-
-                String mail = decodedJWT.getSubject();
-
+                String mail = ControllerUtil.getMailFromAuthorizationHeader(authorizationHeader);
                 System.out.println(mail + " is requesting a new token");
 
                 AppUser user = userService.getUser(mail);
+
+                Algorithm algorithm = SecurityUtil.ALGORITHM;
 
                 String accessToken = JWT.create()
                         .withSubject(user.getMail())
@@ -187,6 +110,8 @@ public class UserController {
                         .withIssuer(request.getRequestURL().toString())
                         .withClaim("role", user.getRole())
                         .sign(algorithm);
+
+                String refreshToken = authorizationHeader.substring(7);
 
                 Map<String, String> tokens = new HashMap<String, String>();
 
